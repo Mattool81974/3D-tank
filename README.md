@@ -53,11 +53,11 @@
 >> ### Map
 >> The main map is a 505 * 505 map which represents a plain, with the middle in 253 - 253, where the player tank is located (we will assume the player tank turret is 5 meter * 5 meter).
 >> Each part has an id describing what is on this part. Here the ids possible for the part :
->> - 0 to 6 : same as texture id.
->> - 7 : player tank location.
+>> - -7 to 7 : same as texture id.
+>> - 8 : player tank location.
 >> The map will be stored into a binary file with the .agmff format (random letter, meaning "a good map file format").
 >> The 4 first bytes describes the width and the height of the map with unsigned integer (in part).
->> The others width * eight 3 bytes describe for the 2 first bytes the number in unsigned integer of a part and the other bytes in signed integer the id of the part.
+>> The others width * eight 5 bytes describe for the 4 first bytes the number in unsigned integer of a part and the other bytes in signed integer the id of the part.
 
 > ## Ressources
 >> ### Sources

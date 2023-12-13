@@ -11,6 +11,7 @@ import map
 import mmath
 import player
 import pygame
+import sprite
 
 class Game:
     """Main class to run the game
@@ -31,6 +32,7 @@ class Game:
 
         self.map = map.Map(self) # Create the map
         self.player = player.Player(self) # Create the player
+        self.leopard2 = sprite.Sprite(self) #Create a Leopard 2
 
     def get_delta_time(self) -> float:
         """Return the time between the last frame and this frame
@@ -79,6 +81,14 @@ class Game:
             int: width of the screen
         """
         return self.SCREEN_WIDTH
+    
+    def get_sprites(self) -> list:
+        """Return a list of all the sprites in the game
+
+        Returns:
+            list: list of all the sprites in the game
+        """
+        return [self.leopard2]
     
     def get_window(self) -> pygame.Surface:
         """Return the main window of the game
@@ -150,24 +160,13 @@ class Game:
             self.handle_event() #Handle all the events during this frame
             if not self.get_running(): break # If the user wants to quit
 
-            #if self.surface == 0:
-            #    self.surface = self.map.display2D()
-
-            #self.game_surface = self.surface.copy()
-
-            #raycast = self.player.ray_cast_turret()
-            #raycast_commander_view = self.player.ray_cast_commander_view()
-            #vector = mmath.direction_vector(self.player.get_turret_angle())
-            #for r in raycast_commander_view:
-            #    pygame.draw.line(self.game_surface, (0, 0, 255), ((self.get_SCREEN_WIDTH() - 1) / 2, (self.get_SCREEN_HEIGHT() - 1) / 2), (r[1][0] * (self.get_SCREEN_WIDTH() / self.get_map().get_map_WIDTH()), r[1][1] * (self.get_SCREEN_HEIGHT() / self.get_map().get_map_HEIGHT())), 2)
-            #pygame.draw.line(self.game_surface, (255, 0, 0), ((self.get_SCREEN_WIDTH() - 1) / 2, (self.get_SCREEN_HEIGHT() - 1) / 2), (raycast[1][0] * (self.get_SCREEN_WIDTH() / self.get_map().get_map_WIDTH()), raycast[1][1] * (self.get_SCREEN_HEIGHT() / self.get_map().get_map_HEIGHT())), 2)
-
             self.game_surface = self.player.projection3D()
             self.window.blit(self.game_surface, (0, 0, self.game_surface.get_width(), self.game_surface.get_height()))
 
             pygame.display.flip() # Update the pygame window
 
             self.delta_time = clock.get_time() # Update the frame between each frame
+            #if clock.get_time() != 0: print(1000/clock.get_time())
             clock.tick(250)
 
 m = map.MapGenerator()

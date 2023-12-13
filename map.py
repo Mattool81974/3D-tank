@@ -124,8 +124,10 @@ class Map:
     def __init__(self, game) -> None:
         """Construct an in-game map handler
         """
+        self.elements = {"nothing": 1, "tree": 2, "player's tank": 7} # Every number for the map element with their names
         self.game = game # Pointer towards the main Game object
         self.parts = [] # 2D list of every parts
+        self.parts_data = {0: {"height": 0}, 2: {"height": 10}} # Datas about a part of the map
 
         self.map_HEIGHT = 505 # Height of the map
         self.map_WIDTH = 505 # Width of the map
@@ -149,6 +151,20 @@ class Map:
                 pygame.draw.rect(surface_to_return, color[self.get_part(i, j)], (j, i, 1, 1))
 
         return pygame.transform.scale(surface_to_return, (screen_width, screen_height))
+    
+    def get_elements(self, element: str) -> int:
+        """Return the number of an element with his name
+
+        Args:
+            element (str): name of an element
+
+        Returns:
+            int: number of an element with his name
+        """
+        if self.elements.__contains__(element):
+            return self.elements[element]
+        else:
+            return 0
     
     def get_map_HEIGHT(self) -> int:
         """Return the height of the map
@@ -185,6 +201,17 @@ class Map:
             list: 2D list of every parts
         """
         return self.parts
+    
+    def get_parts_data(self, part: int) -> dict:
+        """Return the datas about a part of the map
+
+        Args:
+            part (int): part to analyze
+
+        Returns:
+            dict: datas about a part of the map
+        """
+        return self.parts_data[part]
 
     def load(self, path: str = "map.agmff") -> None:
         """Load the map

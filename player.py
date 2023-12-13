@@ -19,9 +19,13 @@ class Player:
 
     def __init__(self, game) -> None:
         """Construct a player class
+
+        Args:
+            game: main game object
         """
         self.game = game
 
+        self.binoculars = 0 # Surface of a binocular effect
         self.commander_view_angle = 0 # Angle of the commander view (like the trigonometrical circle)
         self.commander_view_rotation_speed = 180 # Number of angle the commander view turn by seconds
         self.fov = 45
@@ -29,6 +33,34 @@ class Player:
         self.turret_angle = 0 # Angle of the player (like the trigonometrical circle)
         self.turret_rotation_speed = 60 # Number of angle the turret turn by seconds
         self.view = 0 # Current view of the player
+
+        self.generate_binoculars()
+
+    def generate_binoculars(self) -> None:
+        """Generate a binoculars surface
+        """
+        map_size = (self.game.get_map().get_map_WIDTH(), self.game.get_map().get_map_HEIGHT())
+
+        self.binoculars = pygame.Surface(map_size, pygame.SRCALPHA)
+        self.binoculars.fill((0, 0, 0))
+        pygame.draw.circle(self.binoculars, (0, 0, 0, 0), (math.floor(map_size[0] / 3), math.floor(map_size[0] / 2)), math.floor(map_size[0] / 3))
+        pygame.draw.circle(self.binoculars, (0, 0, 0, 0), (math.ceil(map_size[0] / (3/2)), math.floor(map_size[0] / 2)), math.floor(map_size[0] / 3))
+
+    def get_base_pos(self) -> tuple:
+        """Return the base pos of the player
+
+        Returns:
+            tuple: base pos of the player
+        """
+        return self.base_pos
+
+    def get_binoculars(self) -> str:
+        """Return a binocular surface
+
+        Returns:
+            str: binocular surface
+        """
+        return self.binoculars
 
     def get_commander_view_angle(self) -> float:
         """Return the angle of the commander view (like the trigonometrical circle)
@@ -100,17 +132,47 @@ class Player:
         pygame.draw.rect(surface_to_return, (0, 255, 0), (0, math.floor(map_size[0] / 2), map_size[0], math.ceil(map_size[1] / 2)))
         pygame.draw.rect(surface_to_return, (0, 0, 255), (0, 0, map_size[0], math.ceil(map_size[1] / 2)))
 
+        sprites = self.game.get_sprites()
+        sprites_angles = {}
+        for s in sprites:
+            angle = mmath.normalize_angle(math.atan(abs(self.get_base_pos()[0] - s.get_pos()[0]) / abs(self.get_base_pos()[1] - s.get_pos()[1])))
+            if angle > 270: angle = 360 - angle
+            elif angle > 180: angle += 180
+            elif angle > 90: angle = 180 - angle
+            sprites_angles[s] = angle
+
         i = 0
         for r in raycast: # Calculate with each raycast
             length = r[0]
+            pos = r[1]
+            part = r[2]
+            side = r[3]
 
-            height = (self.get_screen_distance() / (length + 0.000001)) * 5 # Calculate the projection height
-            scale = map_size[0] / len(raycast)
+            if part != 0:
+                height = (self.get_screen_distance() / (length + 0.000001)) # Calculate the projection height
+                datas = self.game.get_map().get_parts_data(r[2])
+                final_height = height * datas["height"] # Calculate the real height
+                scale = map_size[0] / len(raycast)
 
-            color = (255 / (math.sqrt(length)), 255 / math.sqrt(length), 255 / (math.sqrt(length)))
-            if length < 0: color = (255, 255, 255)
-            pygame.draw.rect(surface_to_return, color, (i * scale, map_size[1] // 2 - (height) // 2, scale * 2, height))
+                color = (255 / (math.sqrt(length)), 255 / math.sqrt(length), 255 / (math.sqrt(length)))
+                if length < 0: color = (255, 255, 255)
+
+                if part == self.game.get_map().get_elements("tree"):
+                    if side == 0 or side == 2:
+                        test_pos = abs(pos[0] - math.floor(pos[0])) # Calculate the color of the tree
+                    else:
+                        test_pos = abs(pos[1] - math.floor(pos[1]))
+
+                    if test_pos < 0.2 or test_pos > 0.8:
+                        color = (51, 25, 0)
+                    else:
+                        color = (102, 51, 0)
+
+                pygame.draw.rect(surface_to_return, color, (i * scale, map_size[1] // 2 - (final_height) // 2, scale * 2, final_height))
             i += 1
+
+        if self.get_view() == 1: # Add a binocualr effect
+            surface_to_return.blit(self.get_binoculars(), (0, 0, surface_to_return.get_width(), surface_to_return.get_height()))
 
         return pygame.transform.scale(surface_to_return, (screen_size[0], screen_size[1]))
     
@@ -123,12 +185,12 @@ class Player:
             fov_raycast (float, optional): number of raycast in the FOV. Defaults to 0.
 
         Returns:
-            list: list of element containing the length between the object and the player and a list of point
+            list: list of element containing the length between the object and the player, a list of point, the part touched and the side touched
         """
         angle = mmath.normalize_angle(angle)
         map_size = (self.game.get_map().get_map_WIDTH(), self.game.get_map().get_map_HEIGHT())
 
-        base_pos = (math.ceil(map_size[0] / 2), math.ceil(map_size[1] / 2))
+        self.base_pos = (math.ceil(map_size[0] / 2), math.ceil(map_size[1] / 2))
         
         if fov == 0: # If we don't need a FOV
             vector_direction = mmath.direction_vector(angle)
@@ -137,12 +199,12 @@ class Player:
                 x_to_y = vector_direction[0] / (vector_direction[1])
 
             verticals_intersection_length = mmath.distance2D(0, 0, 2, 2 / x_to_y)
-            verticals_intersection_x = base_pos[0] # Calculate the vertical contact pos
-            verticals_intersection_y = base_pos[1]
+            verticals_intersection_x = self.get_base_pos()[0] # Calculate the vertical contact pos
+            verticals_intersection_y = self.get_base_pos()[1]
 
             horizontals_intersection_length = 0
-            horizontals_intersection_x = base_pos[0] # Calculate the horizontal contact pos
-            horizontals_intersection_y = base_pos[1]
+            horizontals_intersection_x = self.get_base_pos()[0] # Calculate the horizontal contact pos
+            horizontals_intersection_y = self.get_base_pos()[1]
 
             while verticals_intersection_x >= 0 and verticals_intersection_y >= 0 and verticals_intersection_x < map_size[0] and verticals_intersection_y < map_size[1] and (self.game.get_map().get_part(math.floor(verticals_intersection_y), verticals_intersection_x) == 1 or self.game.get_map().get_part(math.floor(verticals_intersection_y), verticals_intersection_x) == 7):
                 # Ray-cast into the verticals axes
@@ -162,12 +224,48 @@ class Player:
                     horizontals_intersection_x += 1 * x_to_y
                     horizontals_intersection_y -= 1
 
-            horizontals_intersection_length = mmath.distance2D(base_pos[0], base_pos[1], horizontals_intersection_x, horizontals_intersection_y) #Calculate total distance
-            verticals_intersection_length = mmath.distance2D(base_pos[0], base_pos[1], verticals_intersection_x, verticals_intersection_y)
-            
+            real_horizontals_intersection_length = -1
+            horizontals_intersection_length = mmath.distance2D(self.get_base_pos()[0], self.get_base_pos()[1], horizontals_intersection_x, horizontals_intersection_y) #Calculate total horizontal distance
+            if horizontals_intersection_x >= 0 and horizontals_intersection_y >= 0 and horizontals_intersection_x < map_size[0] and horizontals_intersection_y < map_size[1]:
+                real_horizontals_intersection_length = horizontals_intersection_length
+
+            real_verticals_intersection_length = -1
+            verticals_intersection_length = mmath.distance2D(self.get_base_pos()[0], self.get_base_pos()[1], verticals_intersection_x, verticals_intersection_y) # Calculate total vertical distance
+            if verticals_intersection_x >= 0 and verticals_intersection_y >= 0 and verticals_intersection_x < map_size[0] and verticals_intersection_y < map_size[1]:
+                real_verticals_intersection_length = verticals_intersection_length
+
+            vertical_or_horizontal = "h"
+
             if verticals_intersection_length < horizontals_intersection_length: # Return the nearest cast length
-                return verticals_intersection_length, (verticals_intersection_x, verticals_intersection_y)
-            return horizontals_intersection_length, (horizontals_intersection_x, horizontals_intersection_y)
+                vertical_or_horizontal = "v"
+            
+            side = 0
+            if angle < 180: # Calculate the touched side
+                if vertical_or_horizontal == "h":
+                    side = 2
+                else:
+                    if angle < 90:
+                        side = 1
+                    else:
+                        side = 3
+            else:
+                if vertical_or_horizontal == "h":
+                    side = 0
+                else:
+                    if angle > 270:
+                        side = 1
+                    else:
+                        side = 3
+
+            part = 0
+            if vertical_or_horizontal == "v": # Return the nearest cast length
+                if real_verticals_intersection_length != -1:
+                    part = self.game.get_map().get_part(math.floor(verticals_intersection_y), verticals_intersection_x)
+                return real_verticals_intersection_length, (verticals_intersection_x, verticals_intersection_y), part, side
+            
+            if real_horizontals_intersection_length != -1:
+                part = self.game.get_map().get_part(horizontals_intersection_y, math.floor(horizontals_intersection_x))
+            return real_horizontals_intersection_length, (horizontals_intersection_x, horizontals_intersection_y), part, side
         # If we need a FOV
         result = []
         for i in range(fov_raycast): # Do FOV raycast

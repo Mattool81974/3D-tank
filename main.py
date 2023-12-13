@@ -101,17 +101,45 @@ class Game:
                     self.pressed_keys.append("left")
                 elif event.key == pygame.K_RIGHT:
                     self.pressed_keys.append("right")
+                elif event.key == pygame.K_q:
+                    self.pressed_keys.append("q")
+                elif event.key == pygame.K_d:
+                    self.pressed_keys.append("d")
+                elif event.key == pygame.K_a:
+                    self.pressed_keys.append("a")
+                elif event.key == pygame.K_e:
+                    self.pressed_keys.append("e")
             elif event.type == pygame.KEYUP: # If a key is released
                 if event.key == pygame.K_LEFT and self.pressed_keys.count("left") > 0: # If the left arrow is pressed
                     self.pressed_keys.remove("left")
                 elif event.key == pygame.K_RIGHT and self.pressed_keys.count("right") > 0:
                     self.pressed_keys.remove("right")
+                elif event.key == pygame.K_q:
+                    self.pressed_keys.remove("q")
+                elif event.key == pygame.K_d:
+                    self.pressed_keys.remove("d")
+                elif event.key == pygame.K_a:
+                    self.pressed_keys.remove("a")
+                elif event.key == pygame.K_e:
+                    self.pressed_keys.remove("e")
         
-        if self.pressed_keys.count("left") > 0: #If the left arrow is pressed, turn at the left
-            self.player.turn_player_turret(self.get_delta_time())
+        if self.pressed_keys.count("left") > 0: # If the left arrow is pressed, turn at the left
+            self.player.turn_turret(self.get_delta_time())
         
-        if self.pressed_keys.count("right") > 0: #If the right arrow is pressed, turn at the right
-            self.player.turn_player_turret(self.get_delta_time(), -1)
+        if self.pressed_keys.count("right") > 0: # If the right arrow is pressed, turn at the right
+            self.player.turn_turret(self.get_delta_time(), -1)
+
+        if self.pressed_keys.count("q") > 0: # If the Q key is pressed, turn at left
+            self.player.turn_commander_view(self.get_delta_time())
+        
+        if self.pressed_keys.count("d") > 0: # If the D key is pressed, turn at left
+            self.player.turn_commander_view(self.get_delta_time(), -1)
+
+        if self.pressed_keys.count("a") > 0: # Set commander view
+            self.player.set_view(0)
+
+        if self.pressed_keys.count("e") > 0: # Set shooter view
+            self.player.set_view(1)
 
     def run(self) -> None:
         """Run the game
@@ -122,21 +150,25 @@ class Game:
             self.handle_event() #Handle all the events during this frame
             if not self.get_running(): break # If the user wants to quit
 
-            if self.surface == 0:
-                self.surface = self.map.display2D()
+            #if self.surface == 0:
+            #    self.surface = self.map.display2D()
 
-            self.game_surface = self.surface.copy()
+            #self.game_surface = self.surface.copy()
 
-            raycast = self.player.ray_cast(self.player.get_player_turret_angle())
-            vector = mmath.direction_vector(self.player.get_player_turret_angle())
-            pygame.draw.line(self.game_surface, (255, 0, 0), ((self.get_SCREEN_WIDTH() - 1) / 2, (self.get_SCREEN_HEIGHT() - 1) / 2), (raycast[1][0] * (self.get_SCREEN_WIDTH() / self.get_map().get_map_WIDTH()), raycast[1][1] * (self.get_SCREEN_HEIGHT() / self.get_map().get_map_HEIGHT())), 2)
-            
+            #raycast = self.player.ray_cast_turret()
+            #raycast_commander_view = self.player.ray_cast_commander_view()
+            #vector = mmath.direction_vector(self.player.get_turret_angle())
+            #for r in raycast_commander_view:
+            #    pygame.draw.line(self.game_surface, (0, 0, 255), ((self.get_SCREEN_WIDTH() - 1) / 2, (self.get_SCREEN_HEIGHT() - 1) / 2), (r[1][0] * (self.get_SCREEN_WIDTH() / self.get_map().get_map_WIDTH()), r[1][1] * (self.get_SCREEN_HEIGHT() / self.get_map().get_map_HEIGHT())), 2)
+            #pygame.draw.line(self.game_surface, (255, 0, 0), ((self.get_SCREEN_WIDTH() - 1) / 2, (self.get_SCREEN_HEIGHT() - 1) / 2), (raycast[1][0] * (self.get_SCREEN_WIDTH() / self.get_map().get_map_WIDTH()), raycast[1][1] * (self.get_SCREEN_HEIGHT() / self.get_map().get_map_HEIGHT())), 2)
+
+            self.game_surface = self.player.projection3D()
             self.window.blit(self.game_surface, (0, 0, self.game_surface.get_width(), self.game_surface.get_height()))
 
-            pygame.display.update() # Update the pygame window
+            pygame.display.flip() # Update the pygame window
 
             self.delta_time = clock.get_time() # Update the frame between each frame
-            clock.tick(60)
+            clock.tick(250)
 
 m = map.MapGenerator()
 m.generate()

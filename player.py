@@ -27,9 +27,11 @@ class Player:
 
         self.binoculars = 0 # Surface of a binocular effect
         self.commander_view_angle = 0 # Angle of the commander view (like the trigonometrical circle)
+        self.commander_view_fov = 45 # FOV of the commander view
         self.commander_view_rotation_speed = 180 # Number of angle the commander view turn by seconds
         self.fov = 45
         self.screen_distance = (math.ceil(self.game.get_map().get_map_WIDTH() / 2) / math.tan(math.radians(self.get_fov() / 2)))
+        self.shooter_view_fov = 10 # FOV of the shooter viewn
         self.turret_angle = 0 # Angle of the player (like the trigonometrical circle)
         self.turret_rotation_speed = 60 # Number of angle the turret turn by seconds
         self.view = 0 # Current view of the player
@@ -70,6 +72,14 @@ class Player:
         """
         return self.commander_view_angle
     
+    def get_commander_view_fov(self) -> float:
+        """Return the fov of the commander view
+
+        Returns:
+            float: fov of the commander view
+        """
+        return self.commander_view_fov
+    
     def get_commander_view_rotation_speed(self) -> float:
         """Return the number of angle the commander view turn by seconds
 
@@ -93,6 +103,14 @@ class Player:
             float: distance of the projection screen from the player
         """
         return self.screen_distance
+    
+    def get_shooter_view_fov(self) -> float:
+        """Return the shooter view fov
+
+        Returns:
+            float: shooter view fov
+        """
+        return self.shooter_view_fov
 
     def get_turret_angle(self) -> float:
         """Return the angle of the player (like the trigonometrical circle)
@@ -135,7 +153,7 @@ class Player:
         sprites = self.game.get_sprites()
         sprites_angles = {}
         sprites_length = {}
-        for s in sprites:
+        for s in sprites: # Calculate how to display the sprite
             angle = mmath.normalize_angle(math.degrees(math.atan(abs(self.get_base_pos()[0] - s.get_pos()[0]) / abs(self.get_base_pos()[1] - s.get_pos()[1]))))
             if angle > 270: angle = 360 - angle
             elif angle > 180: angle += 180
@@ -144,27 +162,45 @@ class Player:
             sprites_length[s] = mmath.distance2D(self.get_base_pos()[0], self.get_base_pos()[1], s.get_pos()[0], s.get_pos()[1])
 
         i = 0
+        scale = math.ceil(map_size[0] / len(raycast))
         for r in raycast: # Calculate with each raycast
             length = r[0]
             pos = r[1]
             part = r[2]
             side = r[3]
             angle = r[4]
+
+            sprite_length = -1
             
-            visibles_sprites = []
+            sprites_displayed = 0
+            visibles_sprites = 0
             for s in sprites:
                 angle_sprite = sprites_angles[s]
                 length_sprite = sprites_length[s]
-                zoom = (self.get_screen_distance() / (length_sprite + 0.000001))
                 fov_sprites = math.degrees(math.atan((s.get_length() / 2) / length_sprite))
-                if angle_sprite > angle - fov_sprites and angle_sprite < angle + fov_sprites:
-                    visibles_sprites.append(s)
+                if angle_sprite > angle - fov_sprites and angle_sprite < angle + fov_sprites and (sprite_length > length_sprite or sprite_length == -1):
+                    sprites_displayed = abs(angle - (angle_sprite - fov_sprites)) / (fov_sprites * 2)
+                    print(sprites_displayed)
+                    visibles_sprites = s
+                    sprite_length = length_sprite
 
+            if sprite_length > length:
+                if visibles_sprites != 0: # Draw a sprites if necessary
+                    height = (self.get_screen_distance() / (sprite_length + 0.000001)) # Calculate the projection height
+                    final_height = height * visibles_sprites.get_height() * (self.get_commander_view_fov() / self.get_fov())
+
+                    texture_x = math.floor(sprites_displayed * visibles_sprites.get_texture_size()[0])
+
+                    color = (0, 0, 0)
+                    for j in range(scale):
+                        surface_to_return.blit(pygame.transform.scale(visibles_sprites.get_texture_column(texture_x), (1, final_height)), (i * scale + j, map_size[1] // 2 - (final_height) // 2, 1, final_height))
+            
             if part != 0:
                 height = (self.get_screen_distance() / (length + 0.000001)) # Calculate the projection height
                 datas = self.game.get_map().get_parts_data(r[2])
-                final_height = height * datas["height"] # Calculate the real height
-                scale = map_size[0] / len(raycast)
+                final_height = height * datas["height"] * (self.get_commander_view_fov() / self.get_fov()) # Calculate the real height
+
+                y = map_size[1] // 2 - (final_height) // 2
 
                 color = (255 / (math.sqrt(length)), 255 / math.sqrt(length), 255 / (math.sqrt(length)))
                 if length < 0: color = (255, 255, 255)
@@ -180,7 +216,18 @@ class Player:
                     else:
                         color = (102, 51, 0)
 
-                pygame.draw.rect(surface_to_return, color, (i * scale, map_size[1] // 2 - (final_height) // 2, scale * 2, final_height))
+                pygame.draw.rect(surface_to_return, color, (i * scale, y, scale, final_height))
+
+            if sprite_length <= length:
+                if visibles_sprites != 0: # Draw a sprites if necessary
+                    height = (self.get_screen_distance() / (sprite_length + 0.000001)) # Calculate the projection height
+                    final_height = height * visibles_sprites.get_height() * (self.get_commander_view_fov() / self.get_fov())
+
+                    texture_x = math.floor(sprites_displayed * visibles_sprites.get_texture_size()[0])
+
+                    color = (0, 0, 0)
+                    for j in range(scale):
+                        surface_to_return.blit(pygame.transform.scale(visibles_sprites.get_texture_column(texture_x), (1, final_height)), (i * scale + j, map_size[1] // 2 - (final_height) // 2, 1, final_height))
             i += 1
 
         if self.get_view() == 1: # Add a binocualr effect
@@ -311,9 +358,9 @@ class Player:
         """
         self.view = view
         if self.get_view() == 0:
-            self.fov = 45
+            self.fov = self.get_commander_view_fov()
         elif self.get_view() == 1:
-            self.fov = 10
+            self.fov = self.get_shooter_view_fov()
     
     def turn_commander_view(self, delta_time: float, multiplicator: float = 1) -> None:
         """Turn the commander view

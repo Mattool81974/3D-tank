@@ -49,6 +49,14 @@ class MapGenerator:
                     loop_element = self.get_elements("player's tank")
                     current_number += 1
                 else:
+                    """
+                    elif i == 80 or i == 420 or j == 80 or j == 420:
+                        loop_element = self.get_elements("tree")
+                        current_number += 1
+                    elif (i == 270 or i == 230) and (j <= 270 or j >= 230) and (i % 2 == 0 and j % 2 == 0):
+                        loop_element = self.get_elements("tree")
+                        current_number += 1
+                    """
                     # If we're on an empty space
                     random_element = random.randint(0, 250)
                     if random_element == 0:

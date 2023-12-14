@@ -134,12 +134,14 @@ class Player:
 
         sprites = self.game.get_sprites()
         sprites_angles = {}
+        sprites_length = {}
         for s in sprites:
-            angle = mmath.normalize_angle(math.atan(abs(self.get_base_pos()[0] - s.get_pos()[0]) / abs(self.get_base_pos()[1] - s.get_pos()[1])))
+            angle = mmath.normalize_angle(math.degrees(math.atan(abs(self.get_base_pos()[0] - s.get_pos()[0]) / abs(self.get_base_pos()[1] - s.get_pos()[1]))))
             if angle > 270: angle = 360 - angle
             elif angle > 180: angle += 180
             elif angle > 90: angle = 180 - angle
             sprites_angles[s] = angle
+            sprites_length[s] = mmath.distance2D(self.get_base_pos()[0], self.get_base_pos()[1], s.get_pos()[0], s.get_pos()[1])
 
         i = 0
         for r in raycast: # Calculate with each raycast
@@ -147,6 +149,16 @@ class Player:
             pos = r[1]
             part = r[2]
             side = r[3]
+            angle = r[4]
+            
+            visibles_sprites = []
+            for s in sprites:
+                angle_sprite = sprites_angles[s]
+                length_sprite = sprites_length[s]
+                zoom = (self.get_screen_distance() / (length_sprite + 0.000001))
+                fov_sprites = math.degrees(math.atan((s.get_length() / 2) / length_sprite))
+                if angle_sprite > angle - fov_sprites and angle_sprite < angle + fov_sprites:
+                    visibles_sprites.append(s)
 
             if part != 0:
                 height = (self.get_screen_distance() / (length + 0.000001)) # Calculate the projection height
@@ -261,11 +273,11 @@ class Player:
             if vertical_or_horizontal == "v": # Return the nearest cast length
                 if real_verticals_intersection_length != -1:
                     part = self.game.get_map().get_part(math.floor(verticals_intersection_y), verticals_intersection_x)
-                return real_verticals_intersection_length, (verticals_intersection_x, verticals_intersection_y), part, side
+                return real_verticals_intersection_length, (verticals_intersection_x, verticals_intersection_y), part, side, angle
             
             if real_horizontals_intersection_length != -1:
                 part = self.game.get_map().get_part(horizontals_intersection_y, math.floor(horizontals_intersection_x))
-            return real_horizontals_intersection_length, (horizontals_intersection_x, horizontals_intersection_y), part, side
+            return real_horizontals_intersection_length, (horizontals_intersection_x, horizontals_intersection_y), part, side, angle
         # If we need a FOV
         result = []
         for i in range(fov_raycast): # Do FOV raycast

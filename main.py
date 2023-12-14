@@ -24,15 +24,15 @@ class Game:
         self.game_surface = 0 # Main graphics pygame Surface of the game
         self.pressed_keys = [] # List of all pressed keys
         self.running = True # If the game is running
-        self.SCREEN_WIDTH = 1010 # Width of the screen (const)
-        self.SCREEN_HEIGHT = 1010 # Height of the screen (const)
+        self.SCREEN_WIDTH = 505 # Width of the screen (const)
+        self.SCREEN_HEIGHT = 505 # Height of the screen (const)
 
         pygame.init() # Activate the pygame display
         self.window = pygame.display.set_mode((self.get_SCREEN_WIDTH(), self.get_SCREEN_HEIGHT()))
 
         self.map = map.Map(self) # Create the map
         self.player = player.Player(self) # Create the player
-        self.leopard2 = sprite.Sprite(self) #Create a Leopard 2
+        self.leopard2 = sprite.Sprite(self, (275, 250), 5) #Create a Leopard 2
 
     def get_delta_time(self) -> float:
         """Return the time between the last frame and this frame

@@ -18,7 +18,7 @@ class MapGenerator:
     def __init__(self) -> None:
         """Construct a map generator
         """
-        self.elements = {"nothing": 1, "tree": 2, "player's tank": 7} # Every number for the map element with their names
+        self.elements = {"nothing": 1, "tree": 2, "brick wall": 4, "player's tank": 7} # Every number for the map element with their names
 
         self.map_WIDTH = 505 # Width of the map (in square)
         self.map_HEIGHT = 505 # Height of the map (in square)
@@ -47,6 +47,9 @@ class MapGenerator:
                 if i >= (self.get_map_WIDTH() - self.get_player_tank_WIDTH()) / 2 and i < (self.get_map_WIDTH() + self.get_player_tank_WIDTH()) / 2 and j > (self.get_map_HEIGHT() - self.get_player_tank_WIDTH()) / 2 and j < (self.get_map_HEIGHT() + self.get_player_tank_WIDTH()) / 2:
                     # If we're on a user part
                     loop_element = self.get_elements("player's tank")
+                    current_number += 1
+                elif j == 252 and i == 199:
+                    loop_element = self.get_elements("brick wall")
                     current_number += 1
                 else:
                     """
@@ -132,10 +135,10 @@ class Map:
     def __init__(self, game) -> None:
         """Construct an in-game map handler
         """
-        self.elements = {"nothing": 1, "tree": 2, "player's tank": 7} # Every number for the map element with their names
+        self.elements = {"nothing": 1, "tree": 2, "brick wall": 4, "player's tank": 7} # Every number for the map element with their names
         self.game = game # Pointer towards the main Game object
         self.parts = [] # 2D list of every parts
-        self.parts_data = {0: {"height": 0}, 2: {"height": 10}} # Datas about a part of the map
+        self.parts_data = {0: {"height": 0, "y": 0}, 2: {"height": 10, "y": 0}, 4: {"height": 5, "y": 0}} # Datas about a part of the map
 
         self.map_HEIGHT = 505 # Height of the map
         self.map_WIDTH = 505 # Width of the map

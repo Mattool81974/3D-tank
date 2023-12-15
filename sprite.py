@@ -114,3 +114,10 @@ class Sprite:
                     pygame.draw.rect(new_surface, self.texture.get_at((i, j)), (0, j, 1, 1))
 
                 self.texture_column.append(new_surface)
+
+    def update(self, delta_time: float) -> None:
+        """Update the sprite for one frame
+
+        Args:
+            delta_time (float): time in seconds between this frame and the last frame
+        """

@@ -32,7 +32,8 @@ class Game:
 
         self.map = map.Map(self) # Create the map
         self.player = player.Player(self) # Create the player
-        self.leopard2 = sprite.Sprite(self, (252, 275), 3, 8, "ressources/textures/leopard2.png") #Create a Leopard 2
+        self.leopard2 = sprite.Sprite(self, (252, 200), 3, 8, "ressources/textures/leopard2.png") #Create a Leopard 2
+        #self.leopard2 = sprite.Sprite(self, (275, 252), 3, 8, "ressources/textures/leopard2.png") #Create a Leopard 2
 
     def get_delta_time(self) -> float:
         """Return the time between the last frame and this frame
@@ -169,8 +170,8 @@ class Game:
             #if clock.get_time() != 0: print(1000/clock.get_time())
             clock.tick(250)
 
-#m = map.MapGenerator()
-#m.generate()
+m = map.MapGenerator()
+m.generate()
 
 # If the user directyl executes the file
 if __name__ == "__main__":

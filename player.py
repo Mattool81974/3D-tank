@@ -27,16 +27,20 @@ class Player:
 
         self.binoculars = 0 # Surface of a binocular effect
         self.commander_view_angle = 0 # Angle of the commander view (like the trigonometrical circle)
+        self.commander_view_elevation = 0
+        self.commander_view_elevation_maximum = self.game.get_map().get_map_WIDTH() // 2.2
+        self.commander_view_elevation_minimum = -100
+        self.commander_view_elevation_speed = 100 # Speed of the commander view elevation speed
         self.commander_view_fov = 45 # FOV of the commander view
         self.commander_view_rotation_speed = 180 # Number of angle the commander view turn by seconds
-        self.floor_offset = game.get_map().get_map_HEIGHT() // 8
+        self.floor_offset = game.get_map().get_map_HEIGHT() // 2
         self.fov = 45
         self.screen_distance = (math.ceil(self.game.get_map().get_map_WIDTH() / 2) / math.tan(math.radians(self.get_fov() / 2)))
         self.shooter_view_fov = 10 # FOV of the shooter viewn
         self.turret_angle = 0 # Angle of the player (like the trigonometrical circle)
         self.turret_rotation_speed = 60 # Number of angle the turret turn by seconds
         self.view = 0 # Current view of the player
-        self.y_offset = 0 # Offset of the y
+        self.y_offset = 1 # Offset of the y
 
         self.generate_binoculars()
 
@@ -73,6 +77,38 @@ class Player:
             float: angle of thecommander view
         """
         return self.commander_view_angle
+    
+    def get_commander_view_elevation(self) -> float:
+        """Return the elevation of the commander view
+
+        Returns:
+            float: elevation of the commander view
+        """
+        return self.commander_view_elevation
+    
+    def get_commander_view_elevation_speed(self) -> float:
+        """Return the speed of the elevation of the commander view
+
+        Returns:
+            float: speed of the elevation of the commander view
+        """
+        return self.commander_view_elevation_speed
+    
+    def get_commander_view_elevation_maximum(self) -> float:
+        """Return the max angle of the elevation angle
+
+        Returns:
+            float: max angle of the elevation angle
+        """
+        return self.commander_view_elevation_maximum
+    
+    def get_commander_view_elevation_minimum(self) -> float:
+        """Return the min angle of the elevation angle
+
+        Returns:
+            float: min angle of the elevation angle
+        """
+        return self.commander_view_elevation_minimum
     
     def get_commander_view_fov(self) -> float:
         """Return the fov of the commander view
@@ -166,10 +202,8 @@ class Player:
         screen_size = (self.game.get_SCREEN_WIDTH(), self.game.get_SCREEN_HEIGHT())
         surface_to_return = pygame.Surface((map_size[0], map_size[1]), pygame.SRCALPHA) # Generate the surface
         surface_to_return.fill((0, 0, 0))
-        pygame.draw.rect(surface_to_return, (0, 255, 0), (0, floor_offset, map_size[0], math.ceil(map_size[1] / 2)))
-        pygame.draw.rect(surface_to_return, (0, 0, 255), (0, 0, map_size[0], floor_offset))
-
-        print(floor_offset)
+        pygame.draw.rect(surface_to_return, (0, 0, 255), (0, 0, map_size[0], map_size[1]))
+        pygame.draw.rect(surface_to_return, (0, 255, 0), (0, floor_offset, map_size[0], map_size[1] - floor_offset))
 
         sprites = self.game.get_sprites()
         sprites_angles = {}
@@ -216,7 +250,8 @@ class Player:
 
                     texture_x = math.floor(sprites_displayed * visibles_sprites.get_texture_size()[0])
 
-                    y = (floor_offset - (final_height) // 2) - ((visibles_sprites.get_height() - 1) * height * (self.get_commander_view_fov() / self.get_fov()) // 2)
+                    y = -height * self.get_y_offset() * (self.get_commander_view_fov() / self.get_fov()) * ((map_size[1] - floor_offset) / (map_size[1] // 2)) # Calculate the y pos of the part (assuming y inversed)
+                    y = map_size[1] - ((map_size[0] - floor_offset) + y + math.floor(final_height)) # Inverse y
 
                     color = (0, 0, 0)
                     for j in range(scale):
@@ -227,7 +262,8 @@ class Player:
                 datas = self.game.get_map().get_parts_data(r[2])
                 final_height = height * datas["height"] * (self.get_commander_view_fov() / self.get_fov()) # Calculate the real height
 
-                y = (floor_offset - (final_height) // 2) - ((datas["height"] - 1) * height * ((self.get_commander_view_fov() / self.get_fov())) // 2)
+                y = -height * self.get_y_offset() * (self.get_commander_view_fov() / self.get_fov()) * ((map_size[1] - floor_offset) / (map_size[1] // 2)) # Calculate the y pos of the part (assuming y inversed)
+                y = map_size[1] - ((map_size[0] - floor_offset) + y + math.floor(final_height)) # Inverse y
 
                 color = (255 / (math.sqrt(length)), 255 / math.sqrt(length), 255 / (math.sqrt(length)))
                 if length < 0: color = (255, 255, 255)
@@ -258,7 +294,8 @@ class Player:
 
                     texture_x = math.floor(sprites_displayed * visibles_sprites.get_texture_size()[0])
 
-                    y = (floor_offset - (final_height) // 2) - ((visibles_sprites.get_height() - 1) * height * (self.get_commander_view_fov() / self.get_fov()) // 2)
+                    y = -height * self.get_y_offset() * (self.get_commander_view_fov() / self.get_fov()) * ((map_size[1] - floor_offset) / (map_size[1] // 2)) # Calculate the y pos of the part (assuming y inversed)
+                    y = map_size[1] - ((map_size[0] - floor_offset) + y + math.floor(final_height)) # Inverse y
 
                     color = (0, 0, 0)
                     for j in range(scale):
@@ -269,6 +306,20 @@ class Player:
             surface_to_return.blit(self.get_binoculars(), (0, 0, surface_to_return.get_width(), surface_to_return.get_height()))
 
         return pygame.transform.scale(surface_to_return, (screen_size[0], screen_size[1]))
+    
+    def raise_commander_view(self, delta_time: float, multiplicator: float = 1) -> None:
+        """Raise the commander view
+
+        Args:
+            delta_time (float): time between the last frame and this frame
+            multiplicator (float, optional): value to multiplie for turning. Defaults to 1.
+        """
+        new_angle = self.get_commander_view_elevation() + self.get_commander_view_elevation_speed() * delta_time * multiplicator
+        print(new_angle)
+        if new_angle > self.get_commander_view_elevation_maximum(): new_angle = self.get_commander_view_elevation_maximum() # Adjust the angle
+        if new_angle < self.get_commander_view_elevation_minimum(): new_angle = self.get_commander_view_elevation_minimum()
+        self.commander_view_elevation = new_angle
+        self.floor_offset = self.game.get_map().get_map_HEIGHT() // 2 + self.get_commander_view_elevation()
     
     def ray_cast(self, angle: float, fov: float = 0, fov_raycast: float = 0) -> list:
         """Return the length between the player and an object on an angle
@@ -363,7 +414,7 @@ class Player:
         # If we need a FOV
         result = []
         for i in range(fov_raycast): # Do FOV raycast
-            result.append(self.ray_cast(angle - ((fov / 2) + fov*(i/fov_raycast))))
+            result.append(self.ray_cast(angle - (-(fov / 2) + fov*((i + 1)/fov_raycast))))
 
         return result # Return the result
     
@@ -404,7 +455,6 @@ class Player:
             delta_time (float): time between the last frame and this frame
             multiplicator (float, optional): value to multiplie for turning. Defaults to 1.
         """
-        delta_time = delta_time / 1000
         self.commander_view_angle += delta_time * self.get_commander_view_rotation_speed() * multiplicator
     
     def turn_turret(self, delta_time: float, multiplicator: float = 1) -> None:

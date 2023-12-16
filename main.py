@@ -33,7 +33,9 @@ class Game:
         self.map = map.Map(self) # Create the map
         self.player = player.Player(self) # Create the player
         self.leopard2 = sprite.Sprite(self, (252, 200), 3, 8, "ressources/textures/leopard2.png") #Create a Leopard 2
-        #self.leopard2 = sprite.Sprite(self, (275, 252), 3, 8, "ressources/textures/leopard2.png") #Create a Leopard 2
+
+        self.floor_offset = self.map.get_map_HEIGHT() // 2
+        self.player.y_offset = 5
 
     def get_delta_time(self) -> float:
         """Return the time between the last frame and this frame
@@ -120,6 +122,10 @@ class Game:
                     self.pressed_keys.append("a")
                 elif event.key == pygame.K_e:
                     self.pressed_keys.append("e")
+                elif event.key == pygame.K_z:
+                    self.pressed_keys.append("z")
+                elif event.key == pygame.K_s:
+                    self.pressed_keys.append("s")
             elif event.type == pygame.KEYUP: # If a key is released
                 if event.key == pygame.K_LEFT and self.pressed_keys.count("left") > 0: # If the left arrow is pressed
                     self.pressed_keys.remove("left")
@@ -133,6 +139,10 @@ class Game:
                     self.pressed_keys.remove("a")
                 elif event.key == pygame.K_e:
                     self.pressed_keys.remove("e")
+                elif event.key == pygame.K_z:
+                    self.pressed_keys.remove("z")
+                elif event.key == pygame.K_s:
+                    self.pressed_keys.remove("s")
         
         if self.pressed_keys.count("left") > 0: # If the left arrow is pressed, turn at the left
             self.player.turn_turret(self.get_delta_time())
@@ -152,6 +162,12 @@ class Game:
         if self.pressed_keys.count("e") > 0: # Set shooter view
             self.player.set_view(1)
 
+        if self.pressed_keys.count("s") > 0: # Set commander view elevation
+            self.player.raise_commander_view(self.get_delta_time())
+
+        if self.pressed_keys.count("z") > 0: # Set shooter view elevation
+            self.player.raise_commander_view(self.get_delta_time(), -1)
+
     def run(self) -> None:
         """Run the game
         """
@@ -166,12 +182,12 @@ class Game:
 
             pygame.display.flip() # Update the pygame window
 
-            self.delta_time = clock.get_time() # Update the frame between each frame
+            self.delta_time = clock.get_time() / 1000 # Update the frame between each frame
             #if clock.get_time() != 0: print(1000/clock.get_time())
             clock.tick(250)
 
-m = map.MapGenerator()
-m.generate()
+#m = map.MapGenerator()
+#m.generate()
 
 # If the user directyl executes the file
 if __name__ == "__main__":

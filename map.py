@@ -48,17 +48,9 @@ class MapGenerator:
                     # If we're on a user part
                     loop_element = self.get_elements("player's tank")
                     current_number += 1
-                elif j == 252 and i == 199:
-                    loop_element = self.get_elements("brick wall")
-                    current_number += 1
                 else:
                     """
-                    elif i == 80 or i == 420 or j == 80 or j == 420:
-                        loop_element = self.get_elements("tree")
-                        current_number += 1
-                    elif (i == 270 or i == 230) and (j <= 270 or j >= 230) and (i % 2 == 0 and j % 2 == 0):
-                        loop_element = self.get_elements("tree")
-                        current_number += 1
+                    
                     """
                     # If we're on an empty space
                     random_element = random.randint(0, 250)
@@ -138,7 +130,7 @@ class Map:
         self.elements = {"nothing": 1, "tree": 2, "brick wall": 4, "player's tank": 7} # Every number for the map element with their names
         self.game = game # Pointer towards the main Game object
         self.parts = [] # 2D list of every parts
-        self.parts_data = {0: {"height": 0, "y": 0}, 2: {"height": 10, "y": 0}, 4: {"height": 5, "y": 0}} # Datas about a part of the map
+        self.parts_data = {0: {"height": 0, "y": 0}, 1: {"height": 0, "y": 0}, 2: {"height": 10, "y": 0, "leaves width": 7}, 4: {"height": 5, "y": 0}} # Datas about a part of the map
 
         self.map_HEIGHT = 505 # Height of the map
         self.map_WIDTH = 505 # Width of the map

@@ -186,8 +186,8 @@ class Game:
             #if clock.get_time() != 0: print(1000/clock.get_time())
             clock.tick(250)
 
-#m = map.MapGenerator()
-#m.generate()
+m = map.MapGenerator()
+m.generate()
 
 # If the user directyl executes the file
 if __name__ == "__main__":
